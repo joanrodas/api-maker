@@ -1,6 +1,6 @@
 <?php
 
-namespace PluginPlaceholder\Includes;
+namespace ApiMaker\Includes;
 
 use Jenssegers\Blade\Blade;
 
@@ -12,8 +12,8 @@ class BladeLoader
     private function __construct()
     {
         $this->blade = new Blade(
-            PLUGIN_PLACEHOLDER_PATH . 'resources/views',
-            PLUGIN_PLACEHOLDER_PATH . 'resources/cache'
+            APIMAKER_PATH . 'resources/views',
+            APIMAKER_PATH . 'resources/cache'
         );
     }
 

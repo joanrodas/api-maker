@@ -1,21 +1,21 @@
 <?php
 
-namespace PluginPlaceholder\Includes;
+namespace ApiMaker\Includes;
 
 class Lyfecycle
 {
     public static function activate($network_wide)
     {
-        do_action('PluginPlaceholder/setup', $network_wide);
+        do_action('ApiMaker/setup', $network_wide);
     }
 
     public static function deactivate($network_wide)
     {
-        do_action('PluginPlaceholder/deactivation', $network_wide);
+        do_action('ApiMaker/deactivation', $network_wide);
     }
 
     public static function uninstall()
     {
-        do_action('PluginPlaceholder/cleanup');
+        do_action('ApiMaker/cleanup');
     }
 }
