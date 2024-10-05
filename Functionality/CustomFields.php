@@ -25,7 +25,7 @@ class CustomFields
 		\Carbon_Fields\Carbon_Fields::boot();
 	}
 
-	public static function register_custom_fields()
+	public function register_custom_fields()
 	{
 		Container::make('post_meta', __('Endpoint Details', 'api-maker'))
 			->where('post_type', '=', 'api_endpoint')
@@ -42,6 +42,7 @@ class CustomFields
 						'GET' => 'GET',
 						'POST' => 'POST',
 						'PUT' => 'PUT',
+						'DELETE' => 'DELETE'
 					])
 					->set_help_text(__('Select the type of this endpoint.', 'api-maker')),
 				Field::make('rich_text', 'json_schema', __('JSON Schema', 'api-maker'))
@@ -49,7 +50,7 @@ class CustomFields
 					->set_conditional_logic([
 						[
 							'field' => 'type',
-							'value' => ['POST', 'PUT'],
+							'value' => ['POST', 'PUT', 'DELETE'],
 							'compare' => 'IN'
 						]
 					]),

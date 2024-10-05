@@ -13,16 +13,17 @@ class Loader
 
     private function loadDependencies()
     {
-        //FUNCTIONALITY CLASSES
         foreach (glob(APIMAKER_PATH . 'Functionality/*.php') as $filename) {
             $class_name = '\\ApiMaker\Functionality\\' . basename($filename, '.php');
             if (class_exists($class_name)) {
                 try {
                     new $class_name(APIMAKER_NAME, APIMAKER_VERSION);
                 } catch (\Throwable $e) {
-                    pb_log($e);
+                    error_log(sprintf('Error loading class %s from file %s: %s', $class_name, $filename, $e->getMessage()));
                     continue;
                 }
+            } else {
+                error_log(sprintf('Class %s not found in file %s', $class_name, $filename));
             }
         }
     }

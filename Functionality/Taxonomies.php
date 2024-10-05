@@ -16,48 +16,81 @@ class Taxonomies
 		add_action('init', [$this, 'register_taxonomies']);
 	}
 
-	public static function register_taxonomies()
+	public function register_taxonomies()
 	{
-		register_taxonomy('namespace', 'api_endpoint', [
-			'labels' => [
-				'name' => __('Namespaces', 'api-maker'),
-				'singular_name' => __('Namespace', 'api-maker'),
-			],
+		$args = [
+			'labels' => $this->get_taxonomy_labels(),
 			'public' => false,
 			'hierarchical' => false,
 			'show_ui' => true,
-			'meta_box_cb' => function ($post, $meta_box_properties) {
-				$tax_name = $meta_box_properties['args']['taxonomy'];
-				$taxonomy = get_taxonomy($tax_name);
-				$terms = get_terms(['taxonomy' => $tax_name, 'hide_empty' => false]);
-				$post_terms = wp_get_object_terms($post->ID, $tax_name, ['fields' => 'ids']);
-				$current = ($post_terms && !is_wp_error($post_terms)) ? $post_terms[0] : 0;
-?>
-			<div id="taxonomy-<?php echo esc_attr($tax_name); ?>" class="categorydiv">
-				<input type="hidden" name="tax_input[<?php echo esc_attr($tax_name); ?>]" value="" />
-				<ul class="category-tabs">
-					<li class="tabs"><a href="#">Select Namespace</a></li>
-				</ul>
-				<div id="<?php echo esc_attr($tax_name); ?>-all" class="tabs-panel">
-					<ul id="<?php echo esc_attr($tax_name); ?>checklist" class="categorychecklist form-no-clear">
-						<?php foreach ($terms as $term) : ?>
-							<li id="<?php echo esc_attr($tax_name . '-' . $term->term_id); ?>">
-								<label class="selectit">
-									<input type="radio" name="tax_input[<?php echo esc_attr($tax_name); ?>]" value="<?php echo esc_attr($term->name); ?>" <?php checked($current, $term->term_id); ?> />
-									<?php echo esc_html($term->name); ?>
-								</label>
-							</li>
-						<?php endforeach; ?>
-					</ul>
-					<p>
-						<a href="<?php echo esc_url(admin_url('edit-tags.php?taxonomy=' . $tax_name . '&post_type=api_endpoint')); ?>">
-							<?php _e('Add New Namespace', 'api-maker'); ?>
-						</a>
-					</p>
-				</div>
-			</div>
-<?php
-			},
+			'meta_box_cb' => [$this, 'render_meta_box'],
+			'show_in_rest' => true,
+		];
+
+		$registered = register_taxonomy('namespace', 'api_endpoint', $args);
+
+		if (is_wp_error($registered)) {
+			error_log('Failed to register taxonomy: ' . $registered->get_error_message());
+		}
+	}
+
+	private function get_taxonomy_labels()
+	{
+		return [
+			'name' => __('Namespaces', 'api-maker'),
+			'singular_name' => __('Namespace', 'api-maker'),
+			'search_items' => __('Search Namespaces', 'api-maker'),
+			'all_items' => __('All Namespaces', 'api-maker'),
+			'edit_item' => __('Edit Namespace', 'api-maker'),
+			'update_item' => __('Update Namespace', 'api-maker'),
+			'add_new_item' => __('Add New Namespace', 'api-maker'),
+			'new_item_name' => __('New Namespace Name', 'api-maker'),
+			'menu_name' => __('Namespaces', 'api-maker'),
+		];
+	}
+
+	public function render_meta_box($post, $meta_box_properties)
+	{
+		$tax_name = $meta_box_properties['args']['taxonomy'];
+		$terms = get_terms([
+			'taxonomy' => $tax_name,
+			'hide_empty' => false,
 		]);
+
+		if (is_wp_error($terms)) {
+			wp_die(esc_html($terms->get_error_message()));
+		}
+
+		$post_terms = wp_get_object_terms($post->ID, $tax_name, ['fields' => 'ids']);
+		$current = ($post_terms && !is_wp_error($post_terms)) ? $post_terms[0] : 0;
+
+		wp_nonce_field('namespace_meta_box', 'namespace_meta_box_nonce');
+?>
+		<div id="taxonomy-<?php echo esc_attr($tax_name); ?>" class="categorydiv">
+			<input type="hidden" name="tax_input[<?php echo esc_attr($tax_name); ?>]" value="" />
+			<ul class="category-tabs">
+				<li class="tabs"><a href="#"><?php esc_html_e('Select Namespace', 'api-maker'); ?></a></li>
+			</ul>
+			<div id="<?php echo esc_attr($tax_name); ?>-all" class="tabs-panel">
+				<ul id="<?php echo esc_attr($tax_name); ?>checklist" class="categorychecklist form-no-clear">
+					<?php foreach ($terms as $term): ?>
+						<li id="<?php echo esc_attr($tax_name . '-' . $term->term_id); ?>">
+							<label class="selectit">
+								<input type="radio" name="tax_input[<?php echo esc_attr($tax_name); ?>]"
+									value="<?php echo esc_attr($term->name); ?>"
+									<?php checked($current, $term->term_id); ?> />
+								<?php echo esc_html($term->name); ?>
+							</label>
+						</li>
+					<?php endforeach; ?>
+				</ul>
+				<p>
+					<a href="<?php echo esc_url(admin_url('edit-tags.php?taxonomy=' . $tax_name . '&post_type=api_endpoint')); ?>">
+						<?php esc_html_e('Add New Namespace', 'api-maker'); ?>
+					</a>
+				</p>
+			</div>
+		</div>
+<?php
 	}
 }
