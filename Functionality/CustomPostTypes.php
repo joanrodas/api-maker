@@ -109,6 +109,7 @@ class CustomPostTypes
 			$transient_seconds = absint(carbon_get_post_meta($post_id, 'transient_seconds'));
 			$human_readable_time = $this->get_human_readable_time($transient_seconds);
 			$specifications[] = sprintf(
+				/* translators: %s: Number of seconds in human readable format */
 				esc_html__('Cache: %s', 'api-maker'),
 				$human_readable_time
 			);
@@ -119,7 +120,8 @@ class CustomPostTypes
 			$rate_limit_every = absint(carbon_get_post_meta($post_id, 'rate_limit_every'));
 			$human_readable_time = $this->get_human_readable_time($rate_limit_every);
 			$specifications[] = sprintf(
-				esc_html__('Rate Limited: %d calls per %s', 'api-maker'),
+				/* translators: %1$d: Number of calls %2$s Number of seconds in human readable format */
+				esc_html__('Rate Limited: %1$d calls per %2$s', 'api-maker'),
 				$rate_limit_max_calls,
 				$human_readable_time
 			);
