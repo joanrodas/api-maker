@@ -25,21 +25,6 @@ class Loader
                 }
             }
         }
-
-        //ADMIN FUNCTIONALITY
-        if( is_admin() ) {
-            foreach (glob(APIMAKER_PATH . 'Functionality/Admin/*.php') as $filename) {
-                $class_name = '\\ApiMaker\Functionality\Admin\\' . basename($filename, '.php');
-                if (class_exists($class_name)) {
-                    try {
-                        new $class_name(APIMAKER_NAME, APIMAKER_VERSION);
-                    } catch (\Throwable $e) {
-                        pb_log($e);
-                        continue;
-                    }
-                }
-            }
-        }
     }
 
     public function loadPluginTextdomain()
