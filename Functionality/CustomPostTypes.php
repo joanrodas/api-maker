@@ -43,24 +43,25 @@ class CustomPostTypes
 	private function get_post_type_labels()
 	{
 		return [
-			'name' => __('Endpoints', 'api-maker'),
-			'singular_name' => __('Endpoint', 'api-maker'),
-			'add_new' => __('Add New Endpoint', 'api-maker'),
-			'add_new_item' => __('Add New Endpoint', 'api-maker'),
-			'edit_item' => __('Edit Endpoint', 'api-maker'),
-			'new_item' => __('New Endpoint', 'api-maker'),
-			'view_item' => __('View Endpoint', 'api-maker'),
-			'search_items' => __('Search Endpoints', 'api-maker'),
-			'not_found' => __('No Endpoints found', 'api-maker'),
-			'not_found_in_trash' => __('No Endpoints found in Trash', 'api-maker'),
+			'name' => esc_html__('Endpoints', 'api-maker'),
+			'singular_name' => esc_html__('Endpoint', 'api-maker'),
+			'add_new' => esc_html__('Add New Endpoint', 'api-maker'),
+			'add_new_item' => esc_html__('Add New Endpoint', 'api-maker'),
+			'edit_item' => esc_html__('Edit Endpoint', 'api-maker'),
+			'new_item' => esc_html__('New Endpoint', 'api-maker'),
+			'view_item' => esc_html__('View Endpoint', 'api-maker'),
+			'search_items' => esc_html__('Search Endpoints', 'api-maker'),
+			'not_found' => esc_html__('No Endpoints found', 'api-maker'),
+			'not_found_in_trash' => esc_html__('No Endpoints found in Trash', 'api-maker'),
 		];
 	}
 
 	public function set_custom_columns($columns)
 	{
-		$columns['route'] = __('Route', 'api-maker');
-		$columns['type'] = __('Type', 'api-maker');
-		$columns['specifications'] = __('Specifications', 'api-maker');
+		$columns['route'] = esc_html__('Route', 'api-maker');
+		$columns['type'] = esc_html__('Type', 'api-maker');
+		$columns['status'] = esc_html__('Status', 'api-maker');
+		$columns['specifications'] = esc_html__('Specifications', 'api-maker');
 		return $columns;
 	}
 
@@ -72,6 +73,9 @@ class CustomPostTypes
 				break;
 			case 'type':
 				$this->display_type($post_id);
+				break;
+			case 'status':
+				$this->display_status($post_id);
 				break;
 			case 'specifications':
 				$this->display_specifications($post_id);
@@ -97,6 +101,18 @@ class CustomPostTypes
 		echo esc_html($type);
 	}
 
+	private function display_status($post_id)
+	{
+		$is_safe = get_post_meta($post_id, 'is_safe', true);
+		if (!$is_safe) {
+			echo esc_html('Inactive: Unsafe', 'api-maker');
+			return;
+		}
+
+		$status = carbon_get_post_meta($post_id, 'status');
+		echo esc_html($status);
+	}
+
 	private function display_specifications($post_id)
 	{
 		$specifications = [];
@@ -118,10 +134,12 @@ class CustomPostTypes
 		if (carbon_get_post_meta($post_id, 'rate_limit')) {
 			$rate_limit_max_calls = absint(carbon_get_post_meta($post_id, 'rate_limit_max_calls'));
 			$rate_limit_every = absint(carbon_get_post_meta($post_id, 'rate_limit_every'));
+			$rate_limit_by = carbon_get_post_meta($post_id, 'rate_limit_by');
 			$human_readable_time = $this->get_human_readable_time($rate_limit_every);
 			$specifications[] = sprintf(
-				/* translators: %1$d: Number of calls %2$s Number of seconds in human readable format */
-				esc_html__('Rate Limited: %1$d calls per %2$s', 'api-maker'),
+				/* translators: %1$s: Limited by type (IP, user, endpoint) %2$d: Number of calls %3$s Number of seconds in human readable format */
+				esc_html__('Rate Limited by %1$s: %2$d calls per %3$s', 'api-maker'),
+				esc_html($rate_limit_by),
 				$rate_limit_max_calls,
 				$human_readable_time
 			);

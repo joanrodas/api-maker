@@ -25,7 +25,9 @@
 	"require": {
 		"php": ">=7.4",
 		"htmlburger/carbon-fields": "^3.6",
-		"joanrodas/plubo-routes": "0.7"
+		"joanrodas/plubo-routes": "0.7",
+		"sirvelia/carbon-field-code-editor": "^0.1.1",
+		"nikic/php-parser": "^5.3"
 	},
 	"type": "wordpress-plugin"
 }

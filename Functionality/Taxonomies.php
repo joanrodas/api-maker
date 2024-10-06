@@ -37,15 +37,15 @@ class Taxonomies
 	private function get_taxonomy_labels()
 	{
 		return [
-			'name' => __('Namespaces', 'api-maker'),
-			'singular_name' => __('Namespace', 'api-maker'),
-			'search_items' => __('Search Namespaces', 'api-maker'),
-			'all_items' => __('All Namespaces', 'api-maker'),
-			'edit_item' => __('Edit Namespace', 'api-maker'),
-			'update_item' => __('Update Namespace', 'api-maker'),
-			'add_new_item' => __('Add New Namespace', 'api-maker'),
-			'new_item_name' => __('New Namespace Name', 'api-maker'),
-			'menu_name' => __('Namespaces', 'api-maker'),
+			'name' => esc_html__('Namespaces', 'api-maker'),
+			'singular_name' => esc_html__('Namespace', 'api-maker'),
+			'search_items' => esc_html__('Search Namespaces', 'api-maker'),
+			'all_items' => esc_html__('All Namespaces', 'api-maker'),
+			'edit_item' => esc_html__('Edit Namespace', 'api-maker'),
+			'update_item' => esc_html__('Update Namespace', 'api-maker'),
+			'add_new_item' => esc_html__('Add New Namespace', 'api-maker'),
+			'new_item_name' => esc_html__('New Namespace Name', 'api-maker'),
+			'menu_name' => esc_html__('Namespaces', 'api-maker'),
 		];
 	}
 
