@@ -17,26 +17,29 @@ class CustomPostTypes
 		add_filter('manage_api_endpoint_posts_columns', [$this, 'set_custom_columns']);
 		add_action('manage_api_endpoint_posts_custom_column', [$this, 'custom_column_content'], 10, 2);
 		add_action('save_post_api_endpoint', [$this, 'update_endpoints_transient']);
-		add_action('delete_post', [$this, 'update_endpoints_transient']);
+		add_action('ApiMaker/setup', [$this, 'add_admin_capabilities']);
+		add_action('ApiMaker/deactivation', [$this, 'remove_admin_capabilities']);
 	}
 
 	public function register_post_types()
 	{
 		$args = [
-			'labels' => $this->get_post_type_labels(),
-			'public' => false,
-			'show_ui' => true,
-			'menu_icon' => 'dashicons-rest-api',
-			'supports' => ['title'],
-			'show_in_menu' => true,
-			'has_archive' => false,
-			'capability_type' => 'post',
+			'labels'             => $this->get_post_type_labels(),
+			'public'             => false,
+			'show_ui'            => true,
+			'menu_icon'          => 'dashicons-rest-api',
+			'supports'           => ['title'],
+			'show_in_menu'       => true,
+			'has_archive'        => false,
+			'capability_type'    => 'api_endpoint',
+			'capabilities'       => $this->get_post_type_capabilities(),
+			'map_meta_cap'       => true,
 		];
 
 		$registered = register_post_type('api_endpoint', $args);
 
 		if (is_wp_error($registered)) {
-			error_log('Failed to register post type: ' . $registered->get_error_message());
+			error_log(esc_html('Failed to register post type: ' . $registered->get_error_message()));
 		}
 	}
 
@@ -54,6 +57,52 @@ class CustomPostTypes
 			'not_found' => esc_html__('No Endpoints found', 'api-maker'),
 			'not_found_in_trash' => esc_html__('No Endpoints found in Trash', 'api-maker'),
 		];
+	}
+
+	private function get_post_type_capabilities()
+	{
+		return [
+			'edit_post'              => 'edit_api_endpoint',
+			'read_post'              => 'read_api_endpoint',
+			'delete_post'            => 'delete_api_endpoint',
+			'edit_posts'             => 'edit_api_endpoints',
+			'edit_others_posts'      => 'edit_others_api_endpoints',
+			'publish_posts'          => 'publish_api_endpoints',
+			'read_private_posts'     => 'read_private_api_endpoints',
+			'delete_posts'           => 'delete_api_endpoints',
+			'delete_private_posts'   => 'delete_private_api_endpoints',
+			'delete_published_posts' => 'delete_published_api_endpoints',
+			'delete_others_posts'    => 'delete_others_api_endpoints',
+			'edit_private_posts'     => 'edit_private_api_endpoints',
+			'edit_published_posts'   => 'edit_published_api_endpoints',
+			'create_posts'           => 'create_api_endpoints'
+		];
+	}
+
+	public function add_admin_capabilities()
+	{
+		$role = get_role('administrator');
+
+		if ($role) {
+			$capabilities = array_values($this->get_post_type_capabilities());
+
+			foreach ($capabilities as $cap) {
+				$role->add_cap($cap);
+			}
+		}
+	}
+
+	public function remove_admin_capabilities()
+	{
+		$role = get_role('administrator');
+
+		if ($role) {
+			$capabilities = array_values($this->get_post_type_capabilities());
+
+			foreach ($capabilities as $cap) {
+				$role->remove_cap($cap);
+			}
+		}
 	}
 
 	public function set_custom_columns($columns)
