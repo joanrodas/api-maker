@@ -83,7 +83,7 @@ class CustomFields
 		return $field;
 	}
 
-	private function get_endpoint_types() {
+	public function get_endpoint_types() {
 		$endpoint_types = [
 			'GET' => 'GET',
 			'POST' => 'POST',
@@ -94,7 +94,7 @@ class CustomFields
 		return apply_filters('api-maker/get_endpoint_types', $endpoint_types);
 	}
 
-	private function get_endpoint_states() {
+	public function get_endpoint_states() {
 		$endpoint_states = [
 			'active' => 'Active',
 			'inactive' => 'Inactive'

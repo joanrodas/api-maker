@@ -5,7 +5,7 @@
  * Plugin Name:       API Maker
  * Plugin URI:        https://sirvelia.com/
  * Description:       Create REST API endpoints easily from the admin dashboard.
- * Version:           1.1.0
+ * Version:           1.2.0
  * Author:            Sirvelia
  * Author URI:        https://sirvelia.com/
  * License:           GPL-3.0+
@@ -20,7 +20,7 @@ if (!defined('WPINC')) {
 
 // PLUGIN CONSTANTS
 define('APIMAKER_NAME', 'api-maker');
-define('APIMAKER_VERSION', '1.1.0');
+define('APIMAKER_VERSION', '1.2.0');
 define('APIMAKER_PATH', plugin_dir_path(__FILE__));
 define('APIMAKER_BASENAME', plugin_basename(__FILE__));
 define('APIMAKER_URL', plugin_dir_url(__FILE__));

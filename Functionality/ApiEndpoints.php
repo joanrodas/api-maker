@@ -8,11 +8,11 @@ use PluboRoutes\Endpoint\GetEndpoint;
 use PluboRoutes\Endpoint\PostEndpoint;
 use PluboRoutes\Endpoint\PutEndpoint;
 use PluboRoutes\Endpoint\DeleteEndpoint;
-use PluboRoutes\Middleware\CacheMiddleware;
-use PluboRoutes\Middleware\JsonTokenValidationMiddleware;
+use PluboRoutes\Middleware\Cache;
+use PluboRoutes\Middleware\JwtValidation;
 use PluboRoutes\Middleware\SchemaValidator;
-use PluboRoutes\Middleware\RateLimitMiddleware;
-use PluboRoutes\Middleware\CorsMiddleware;
+use PluboRoutes\Middleware\RateLimit;
+use PluboRoutes\Middleware\Cors;
 
 class ApiEndpoints
 {
@@ -67,21 +67,21 @@ class ApiEndpoints
 		}
 
 		if ($jwt_protection) {
-			$endpoint->useMiddleware(new JsonTokenValidationMiddleware($jwt_secret));
+			$endpoint->useMiddleware(new JwtValidation($jwt_secret));
 		}
 
 		if ($save_transient) {
-			$endpoint->useMiddleware(new CacheMiddleware((int)$transient_seconds));
+			$endpoint->useMiddleware(new Cache((int)$transient_seconds));
 		}
 
 		if ($rate_limit) {
-			$endpoint->useMiddleware(new RateLimitMiddleware((int)$rate_limit_max_calls, (int)$rate_limit_every), $rate_limit_by ?: 'int');
+			$endpoint->useMiddleware(new RateLimit((int)$rate_limit_max_calls, (int)$rate_limit_every), $rate_limit_by ?: 'int');
 		}
 
 		$add_cors = apply_filters('api-maker/add_cors', true, $endpoint, $post_id, $type);
 
 		if ($add_cors) {
-			$endpoint->useMiddleware(new CorsMiddleware('*', [$type], ['Content-Type', 'Authorization']));
+			$endpoint->useMiddleware(new Cors('*', [$type], ['Content-Type', 'Authorization']));
 		}
 	}
 
@@ -161,19 +161,36 @@ class ApiEndpoints
 			// Sanitize the function name and ensure it is a callable function
 			$function_name = sanitize_text_field($function_name);
 			$forbidden_functions = PhpValidator::get_forbidden_functions();
-			if (!function_exists($function_name) || in_array($function_name, $forbidden_functions, true)) {
+			if (!function_exists($function_name)) {
+				update_post_meta($post_id, 'is_safe', false); // Mark as unsafe
+				/* translators: %s: Function name */
+				update_post_meta($post_id, 'code_validation_errors', sprintf(esc_html__('Undefined function "%s"', 'api-maker'), $function_name));
 				/* translators: %1$s: Function name %2$d: ID */
-				error_log(sprintf(esc_html__('Forbidden or undefined function "%1$s" used in endpoint ID: %2$d', 'api-maker'), $function_name, $post_id));
+				error_log(sprintf(esc_html__('Undefined function "%1$s" used in endpoint ID: %2$d', 'api-maker'), $function_name, $post_id));
 				continue;
 			}
+
+			if (in_array($function_name, $forbidden_functions, true)) {
+				update_post_meta($post_id, 'is_safe', false); // Mark as unsafe
+				/* translators: %s: Function name */
+				update_post_meta($post_id, 'code_validation_errors', sprintf(esc_html__('Forbidden function "%s"', 'api-maker'), $function_name)); // Save errors
+				/* translators: %1$s: Function name %2$d: ID */
+				error_log(sprintf(esc_html__('Forbidden function "%1$s" used in endpoint ID: %2$d', 'api-maker'), $function_name, $post_id));
+				continue;
+			}
+
+
 			$callback = function ($request) use ($function_name) {
-				if (function_exists($function_name)) {
-					return $function_name($request);
-				} else {
-					return esc_html__('Function not defined properly.', 'api-maker');
+				try {
+					if (function_exists($function_name)) {
+						return $function_name($request);
+					} else {
+						return esc_html__('Function not defined properly.', 'api-maker');
+					}
+				} catch (\Throwable $th) {
+					return esc_html__('Error in function:', 'api-maker') . $th->getMessage();
 				}
 			};
-
 
 			$endpoint = new $endpoint_class("$namespace/$version", $route, $callback);
 			$this->add_middlewares($endpoint, $post_id, $type);
