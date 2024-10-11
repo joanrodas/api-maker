@@ -46,7 +46,7 @@ class ApiEndpoints
 			case 'DELETE':
 				return DeleteEndpoint::class;
 			default:
-				return null;
+				return apply_filters('api-maker/custom_endpoint_class', null, $type);
 		}
 	}
 
@@ -78,7 +78,11 @@ class ApiEndpoints
 			$endpoint->useMiddleware(new RateLimitMiddleware((int)$rate_limit_max_calls, (int)$rate_limit_every), $rate_limit_by ?: 'int');
 		}
 
-		$endpoint->useMiddleware(new CorsMiddleware('*', [$type], ['Content-Type', 'Authorization']));
+		$add_cors = apply_filters('api-maker/add_cors', true, $endpoint, $post_id, $type);
+
+		if ($add_cors) {
+			$endpoint->useMiddleware(new CorsMiddleware('*', [$type], ['Content-Type', 'Authorization']));
+		}
 	}
 
 	public function add_endpoints($endpoints)
@@ -88,7 +92,7 @@ class ApiEndpoints
 			$query = new \WP_Query([
 				'post_type'   => 'api_endpoint',
 				'post_status' => 'publish',
-				'posts_per_page' => -1,
+				'posts_per_page' => 200,
 				'meta_query'  => [
 					'relation' => 'AND',
 					[
@@ -110,8 +114,6 @@ class ApiEndpoints
 			set_transient('api_maker_endpoints', $ep, 5 * DAY_IN_SECONDS);
 		}
 
-		$forbidden_functions = PhpValidator::get_dangerous_functions();
-
 		global $wp_filesystem;
 		if (empty($wp_filesystem)) {
 			require_once ABSPATH . '/wp-admin/includes/file.php';
@@ -125,8 +127,6 @@ class ApiEndpoints
 			$route = carbon_get_post_meta($post_id, 'route');
 			$version = carbon_get_post_meta($post_id, 'version');
 			$type = carbon_get_post_meta($post_id, 'type');
-			$callback_type = carbon_get_post_meta($post_id, 'callback_type');
-			$function_code = carbon_get_post_meta($post_id, 'function_code');
 			$function_name = carbon_get_post_meta($post_id, 'function_name');
 			$status = carbon_get_post_meta($post_id, 'status');
 
@@ -134,11 +134,7 @@ class ApiEndpoints
 				continue;
 			}
 
-			if ($callback_type === 'code') {
-				if (!defined('ALLOW_API_MAKER_CODE_EDITOR') || !ALLOW_API_MAKER_CODE_EDITOR || empty($function_code)) {
-					continue;
-				}
-			} else if (!$function_name) {
+			if (!$function_name) {
 				continue;
 			}
 
@@ -162,69 +158,26 @@ class ApiEndpoints
 				continue;
 			}
 
-			if ($callback_type === 'code') {
-				// Validate the user-provided function code using PhpValidator
-				$validation_result = PhpValidator::validate_php($function_code);
-
-				if (is_wp_error($validation_result)) {
-					error_log('Validation Error in endpoint ID ' . $post_id . ': ' . $validation_result->get_error_message());
-					continue; // Skip this endpoint due to validation error
-				}
-
-				// Create a temporary file for executing user code
-				$temp_file = wp_tempnam('api_maker', get_temp_dir()) . '.php';
-
-				// Write the user-provided function code to the temporary file
-				$wrapped_code = "<?php\nfunction api_maker_user_function_{$post_id}(\$request) {\n" . $function_code . "\n}";
-				$wp_filesystem->put_contents($temp_file, $wrapped_code);
-
-				// Define the callback function to include the temporary file
-				$callback = function ($request) use ($temp_file, $post_id) {
-					try {
-						set_time_limit(10);
-						ini_set('memory_limit', '128M');
-						ini_set('allow_url_fopen', '0');
-						ini_set('allow_url_include', '0');
-
-						if (file_exists($temp_file)) {
-							include $temp_file;
-							$function_name = "api_maker_user_function_{$post_id}";
-
-							if (function_exists($function_name)) {
-								return $function_name($request);
-							} else {
-								return esc_html__('Function not defined properly.', 'api-maker');
-							}
-						} else {
-							return esc_html__('Temporary file not found.', 'api-maker');
-						}
-					} catch (\Exception $e) {
-						error_log($e->getMessage());
-						return esc_html__('Error executing endpoint.', 'api-maker');
-					} finally {
-						// Delete the temporary file after execution
-						wp_delete_file($temp_file);
-					}
-				};
-			} else {
-				// Sanitize the function name and ensure it is a callable function
-				$function_name = sanitize_text_field($function_name);
-				if (!function_exists($function_name) || in_array($function_name, $forbidden_functions, true)) {
-					/* translators: %1$s: Function name %2$d: ID */
-					error_log(sprintf(esc_html__('Forbidden or undefined function "%1$s" used in endpoint ID: %2$d', 'api-maker'), $function_name, $post_id));
-					continue;
-				}
-				$callback = function ($request) use ($function_name) {
-					if (function_exists($function_name)) {
-						return $function_name($request);
-					} else {
-						return esc_html__('Function not defined properly.', 'api-maker');
-					}
-				};
+			// Sanitize the function name and ensure it is a callable function
+			$function_name = sanitize_text_field($function_name);
+			$forbidden_functions = PhpValidator::get_forbidden_functions();
+			if (!function_exists($function_name) || in_array($function_name, $forbidden_functions, true)) {
+				/* translators: %1$s: Function name %2$d: ID */
+				error_log(sprintf(esc_html__('Forbidden or undefined function "%1$s" used in endpoint ID: %2$d', 'api-maker'), $function_name, $post_id));
+				continue;
 			}
+			$callback = function ($request) use ($function_name) {
+				if (function_exists($function_name)) {
+					return $function_name($request);
+				} else {
+					return esc_html__('Function not defined properly.', 'api-maker');
+				}
+			};
+
 
 			$endpoint = new $endpoint_class("$namespace/$version", $route, $callback);
 			$this->add_middlewares($endpoint, $post_id, $type);
+			do_action('api-maker/after_add_middlewares', $endpoint, $post_id, $type);
 
 			$endpoints[] = $endpoint;
 		}

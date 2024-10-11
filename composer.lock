@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f3b59f6c8b89abcbdd7c4eb6aaa646b5",
+    "content-hash": "b353d82557165c4e59b6b2056b475a9e",
     "packages": [
         {
             "name": "htmlburger/carbon-fields",
@@ -263,16 +263,16 @@
         },
         {
             "name": "joanrodas/plubo-routes",
-            "version": "v0.7.0",
+            "version": "v0.7.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/joanrodas/plubo-routes.git",
-                "reference": "d1633258a36c5ece976c371caf79ae289b1b3299"
+                "reference": "1babd39113d0bce668b5b62329b06fd50b72c0c9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/joanrodas/plubo-routes/zipball/d1633258a36c5ece976c371caf79ae289b1b3299",
-                "reference": "d1633258a36c5ece976c371caf79ae289b1b3299",
+                "url": "https://api.github.com/repos/joanrodas/plubo-routes/zipball/1babd39113d0bce668b5b62329b06fd50b72c0c9",
+                "reference": "1babd39113d0bce668b5b62329b06fd50b72c0c9",
                 "shasum": ""
             },
             "require": {
@@ -308,7 +308,7 @@
             ],
             "support": {
                 "issues": "https://github.com/joanrodas/plubo-routes/issues",
-                "source": "https://github.com/joanrodas/plubo-routes/tree/v0.7.0"
+                "source": "https://github.com/joanrodas/plubo-routes/tree/v0.7.2"
             },
             "funding": [
                 {
@@ -316,7 +316,7 @@
                     "type": "ko_fi"
                 }
             ],
-            "time": "2024-10-04T21:02:07+00:00"
+            "time": "2024-10-08T09:11:22+00:00"
         },
         {
             "name": "justinrainbow/json-schema",
@@ -462,64 +462,6 @@
                 "source": "https://github.com/marc-mabe/php-enum/tree/v4.7.0"
             },
             "time": "2022-04-19T02:21:46+00:00"
-        },
-        {
-            "name": "nikic/php-parser",
-            "version": "v5.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "3abf7425cd284141dc5d8d14a9ee444de3345d1a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/3abf7425cd284141dc5d8d14a9ee444de3345d1a",
-                "reference": "3abf7425cd284141dc5d8d14a9ee444de3345d1a",
-                "shasum": ""
-            },
-            "require": {
-                "ext-ctype": "*",
-                "ext-json": "*",
-                "ext-tokenizer": "*",
-                "php": ">=7.4"
-            },
-            "require-dev": {
-                "ircmaxell/php-yacc": "^0.0.7",
-                "phpunit/phpunit": "^9.0"
-            },
-            "bin": [
-                "bin/php-parse"
-            ],
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "5.0-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "PhpParser\\": "lib/PhpParser"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Nikita Popov"
-                }
-            ],
-            "description": "A PHP parser written in PHP",
-            "keywords": [
-                "parser",
-                "php"
-            ],
-            "support": {
-                "issues": "https://github.com/nikic/PHP-Parser/issues",
-                "source": "https://github.com/nikic/PHP-Parser/tree/v5.3.0"
-            },
-            "time": "2024-09-29T13:56:26+00:00"
         },
         {
             "name": "sirvelia/carbon-field-code-editor",

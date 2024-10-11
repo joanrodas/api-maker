@@ -19,7 +19,7 @@ class CustomFields
 
 		add_action('after_setup_theme', [$this, 'load_cf']);
 		add_action('carbon_fields_register_fields', [$this, 'register_custom_fields']);
-		add_filter('carbon_fields_before_field_save', [$this, 'sanitize_php']);
+		add_filter('carbon_fields_before_field_save', [$this, 'check_function_name']);
 		add_action('admin_footer', [$this, 'display_errors']);
 	}
 
@@ -44,7 +44,7 @@ class CustomFields
 		}
 	}
 
-	function sanitize_php($field)
+	function check_function_name($field)
 	{
 		if (!isset($_POST['post_ID'])) {
 			return $field;
@@ -54,24 +54,7 @@ class CustomFields
 			return $field;
 		}
 
-		if ($field->get_type() == 'code_editor' && $field->get_base_name() == 'function_code') {
-
-			$post_id = intval($_POST['post_ID']);
-			$function_code = $field->get_value();
-			if (!$function_code) return $field;
-			$validation_result = PhpValidator::validate_php($function_code);
-
-			if (is_wp_error($validation_result)) {
-				// Mark the post as unsafe and store the errors in post meta
-				update_post_meta($post_id, 'is_safe', false); // Mark as unsafe
-				update_post_meta($post_id, 'code_validation_errors', $validation_result->get_error_message()); // Save errors
-				return $field;
-			}
-
-			// Mark the post as safe and clear any previous errors
-			update_post_meta($post_id, 'is_safe', true); // Mark as safe
-			delete_post_meta($post_id, 'code_validation_errors'); // Clear previous errors
-		} else if ($field->get_type() == 'text' && $field->get_base_name() == 'function_name') {
+		if ($field->get_type() == 'text' && $field->get_base_name() == 'function_name') {
 
 			$post_id = intval($_POST['post_ID']);
 			$function_name = sanitize_text_field($field->get_value());
@@ -84,7 +67,7 @@ class CustomFields
 				return $field;
 			}
 
-			$forbidden_functions = PhpValidator::get_dangerous_functions();
+			$forbidden_functions = PhpValidator::get_forbidden_functions();
 			if (in_array($function_name, $forbidden_functions, true)) {
 				update_post_meta($post_id, 'is_safe', false); // Mark as unsafe
 				/* translators: %s: Function name */
@@ -100,6 +83,26 @@ class CustomFields
 		return $field;
 	}
 
+	private function get_endpoint_types() {
+		$endpoint_types = [
+			'GET' => 'GET',
+			'POST' => 'POST',
+			'PUT' => 'PUT',
+			'DELETE' => 'DELETE'
+		];
+
+		return apply_filters('api-maker/get_endpoint_types', $endpoint_types);
+	}
+
+	private function get_endpoint_states() {
+		$endpoint_states = [
+			'active' => 'Active',
+			'inactive' => 'Inactive'
+		];
+
+		return apply_filters('api-maker/get_endpoint_states', $endpoint_states);
+	}
+
 	public function register_custom_fields()
 	{
 
@@ -108,44 +111,23 @@ class CustomFields
 				->set_help_text(esc_html__('Define the endpoint route, e.g., "custom-route"', 'api-maker')),
 
 			Field::make('select', 'status', esc_html__('Status', 'api-maker'))
-				->set_options([
-					'active' => 'Active',
-					'inactive' => 'Inactive'
-				])
+				->set_options([$this, 'get_endpoint_states'])
 				->set_help_text(esc_html__('Specify the status of the endpoint.', 'api-maker')),
 
-			Field::make('select', 'callback_type', esc_html__('Callback Type', 'api-maker'))
-				->set_options((defined('ALLOW_API_MAKER_CODE_EDITOR') && ALLOW_API_MAKER_CODE_EDITOR) ? [
-					'name' => 'Name',
-					'code' => 'Code'
-				] : ['name' => 'Name'])
-				->set_help_text(esc_html__('Select whether to use a function name or code for the callback. You must define ALLOW_API_MAKER_CODE_EDITOR to true to enable code edition. Do not enable this option if you are not an experienced developer. Copy-pasting code without knowledge can be extremely dangerous.', 'api-maker')),
-
 			Field::make('text', 'function_name', esc_html__('Function Name', 'api-maker'))
-				->set_help_text(esc_html__('Provide the function name to execute when this endpoint is accessed.', 'api-maker'))
-				->set_conditional_logic([
-					[
-						'field' => 'callback_type',
-						'value' => 'name'
-					]
-				]),
+				->set_help_text(esc_html__('Provide the function name to execute when this endpoint is accessed. You must define that function elsewhere.', 'api-maker')),
 
 			Field::make('text', 'version', esc_html__('Version', 'api-maker'))
 				->set_help_text(esc_html__('Version of this endpoint, e.g., "v1"', 'api-maker')),
 
 			Field::make('select', 'type', esc_html__('Type', 'api-maker'))
-				->set_options([
-					'GET' => 'GET',
-					'POST' => 'POST',
-					'PUT' => 'PUT',
-					'DELETE' => 'DELETE'
-				])
+				->set_options([$this, 'get_endpoint_types'])
 				->set_help_text(esc_html__('Select the type of this endpoint.', 'api-maker')),
 
-			Field::make('textarea', 'json_schema', esc_html__('JSON Schema'))
-				// ->set_language('json')
-				// ->set_indent_unit(2)
-				// ->set_tab_size(2)
+			Field::make('code_editor', 'json_schema', esc_html__('JSON Schema'))
+				->set_language('json')
+				->set_indent_unit(2)
+				->set_tab_size(2)
 				->set_help_text(esc_html__('Define the JSON schema for validating the input.', 'api-maker'))
 				->set_conditional_logic([
 					[
@@ -164,6 +146,7 @@ class CustomFields
 						'value' => true,
 					]
 				]),
+
 			Field::make('checkbox', 'save_transient', esc_html__('Save Response in Transient', 'api-maker')),
 			Field::make('text', 'transient_seconds', esc_html__('Transient Expiry Time (seconds)', 'api-maker'))
 				->set_attribute('type', 'number')
@@ -174,6 +157,7 @@ class CustomFields
 						'value' => true,
 					]
 				]),
+
 			Field::make('checkbox', 'rate_limit', esc_html__('Enable Rate Limit', 'api-maker')),
 			Field::make('text', 'rate_limit_max_calls', esc_html__('Max Calls', 'api-maker'))
 				->set_attribute('type', 'number')
@@ -207,22 +191,6 @@ class CustomFields
 					]
 				])
 		];
-
-		if (defined('ALLOW_API_MAKER_CODE_EDITOR') && ALLOW_API_MAKER_CODE_EDITOR) {
-			array_splice($fields, 4, 0, [
-				Field::make('code_editor', 'function_code', esc_html__('Code Editor'))
-					->set_language('php')
-					->set_indent_unit(2)
-					->set_tab_size(2)
-					->set_help_text(esc_html__('Write the PHP code to execute when this endpoint is accessed ($request available). Do not create a function and proceed with caution.', 'api-maker'))
-					->set_conditional_logic([
-						[
-							'field' => 'callback_type',
-							'value' => 'code',
-						]
-					])
-			]);
-		}
 
 		Container::make('post_meta', esc_html__('Endpoint Details', 'api-maker'))
 			->where('post_type', '=', 'api_endpoint')
