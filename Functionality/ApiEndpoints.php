@@ -93,21 +93,7 @@ class ApiEndpoints
 				'post_type'   => 'api_endpoint',
 				'post_status' => 'publish',
 				'posts_per_page' => 200,
-				'meta_query'  => [
-					'relation' => 'AND',
-					[
-						'key'     => 'is_safe',
-						'value'   => true,
-						'compare' => '=',
-						'type'    => 'BOOLEAN'
-					],
-					[
-						'key'     => 'status',
-						'value'   => 'active',
-						'compare' => '=',
-					]
-				],
-				'no_found_rows' => true,
+				'no_found_rows' => true
 			]);
 
 			$ep = $query->posts; // Get the posts array
@@ -165,8 +151,6 @@ class ApiEndpoints
 				update_post_meta($post_id, 'is_safe', false); // Mark as unsafe
 				/* translators: %s: Function name */
 				update_post_meta($post_id, 'code_validation_errors', sprintf(esc_html__('Undefined function "%s"', 'api-maker'), $function_name));
-				/* translators: %1$s: Function name %2$d: ID */
-				error_log(sprintf(esc_html__('Undefined function "%1$s" used in endpoint ID: %2$d', 'api-maker'), $function_name, $post_id));
 				continue;
 			}
 
@@ -174,8 +158,6 @@ class ApiEndpoints
 				update_post_meta($post_id, 'is_safe', false); // Mark as unsafe
 				/* translators: %s: Function name */
 				update_post_meta($post_id, 'code_validation_errors', sprintf(esc_html__('Forbidden function "%s"', 'api-maker'), $function_name)); // Save errors
-				/* translators: %1$s: Function name %2$d: ID */
-				error_log(sprintf(esc_html__('Forbidden function "%1$s" used in endpoint ID: %2$d', 'api-maker'), $function_name, $post_id));
 				continue;
 			}
 

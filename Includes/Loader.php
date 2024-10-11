@@ -19,11 +19,8 @@ class Loader
                 try {
                     new $class_name(APIMAKER_NAME, APIMAKER_VERSION);
                 } catch (\Throwable $e) {
-                    error_log(sprintf('Error loading class %s from file %s: %s', $class_name, $filename, $e->getMessage()));
                     continue;
                 }
-            } else {
-                error_log(sprintf('Class %s not found in file %s', $class_name, $filename));
             }
         }
     }

@@ -36,11 +36,7 @@ class CustomPostTypes
 			'map_meta_cap'       => true,
 		];
 
-		$registered = register_post_type('api_endpoint', $args);
-
-		if (is_wp_error($registered)) {
-			error_log(esc_html('Failed to register post type: ' . $registered->get_error_message()));
-		}
+		register_post_type('api_endpoint', $args);
 	}
 
 	private function get_post_type_labels()

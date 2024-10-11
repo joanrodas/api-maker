@@ -27,11 +27,7 @@ class Taxonomies
 			'show_in_rest' => true,
 		];
 
-		$registered = register_taxonomy('namespace', 'api_endpoint', $args);
-
-		if (is_wp_error($registered)) {
-			error_log('Failed to register taxonomy: ' . $registered->get_error_message());
-		}
+		register_taxonomy('namespace', 'api_endpoint', $args);
 	}
 
 	private function get_taxonomy_labels()

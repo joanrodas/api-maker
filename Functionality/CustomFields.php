@@ -124,7 +124,7 @@ class CustomFields
 				->set_options([$this, 'get_endpoint_types'])
 				->set_help_text(esc_html__('Select the type of this endpoint.', 'api-maker')),
 
-			Field::make('code_editor', 'json_schema', esc_html__('JSON Schema'))
+			Field::make('code_editor', 'json_schema', esc_html__('JSON Schema', 'api-maker'))
 				->set_language('json')
 				->set_indent_unit(2)
 				->set_tab_size(2)
